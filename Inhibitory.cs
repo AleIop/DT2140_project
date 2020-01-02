@@ -9,49 +9,38 @@ public class Inhibitory : MonoBehaviour {
     public bool activation;
     public int latestActivationTime;
 
-    public Color COLOR
-    {
-        get
-        {
+    /*
+        properties for color, previous activation time, activation status of the single basket cell
+    */
+    public Color COLOR {
+        get {
             return this.color;
         }
-        set
-        {
+        set {
             this.color = value;
         }
     }
-    public int PreviousTime
-    {
-        get
-        {
+    public int PreviousTime {
+        get {
             return this.latestActivationTime;
         }
-        set
-        {
+        set {
             this.latestActivationTime = value;
         }
     }
-
-    public bool IsActive
-    {
-        get
-        {
+    public bool IsActive {
+        get {
             return this.activation;
         }
-        set
-        {
-            if (this.activation)
-            {
+        set {
+            if (this.activation) {
                 //the animation call here
                 //StartCoroutine(DeactivateInh());
-            }
-            else
-            {
-               // StartCoroutine(ActivateInh());
+            } else {
+                //StartCoroutine(ActivateInh());
 
             }
             this.activation = value;
         }
     }
-
 }
