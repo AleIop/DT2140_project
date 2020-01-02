@@ -9,33 +9,40 @@ public class MC:MonoBehaviour{
     public bool isActive;
     public Dictionary<int, List<GameObject>> activation;
     public Dictionary<int, List<GameObject>> deactivation;
-//	public AnimationClip myAnimClip;
-//	AnimationCurve curve;
-/* 
-	public AnimationClip ANIMCLIP{
+	//public AnimationClip myAnimClip;
+	//AnimationCurve curve;
+
+	/* 
+	these two were supposed to be associated to the animation variables above
+
+	public AnimationClip ANIMCLIP {
 		get{
 			return this.myAnimClip;
-		}set{
+		}
+		set{
 			return this.myAnimClip = value;
 		}
 	}
-	private void CreateAnimationClip(){
 
-	}*/
+	private void CreateAnimationClip() {
+
+	}
+	*/
+
+
+	/*
+		define two properties for a MC
+	*/
 	public int ID
 	{
-		get
-		{
+		get {
 			return this.id;
 		}
-		set
-		{
+		set {
 			this.id = value;
 		}
 	}
-
-	public Color COLOR
-	{
+	public Color COLOR {
 		get
 		{
 			return this.color;
