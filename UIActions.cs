@@ -57,36 +57,46 @@ public class UIActions : MonoBehaviour
 	public static bool isPlaying=false;
     int prevTime;
     //private Queue<int> deactivation= new Queue<int>();
-
     //private Dictionary<int, List<int>> unactivatePhase;
 
-    public float Speed{
-		get{return speed;}
-		set{speed = value;}
+    //property associated to the variable speed
+    public float Speed {
+		get {
+            return speed;
+        }
+		set {
+            speed = value;
+        }
 	}
 
     public float animationTime
     {
         get { return timeSlider.value; }
-
     }
     private Color excitatoryColor;
 
 
     // Use this for initialization
     public void Initiate(){
-		timeSlider.minValue = 0f;
+		timeSlider.minValue = 0f; //lower bound of the slider
 		//timeSlider2.minValue = 0f;
 		//timeSlider.maxValue = 44450.1f;
+
+        //index and time of the last excitatory spike
 		int lastIndex = DataReader.e_newTimes.Count();
 		float lastTime = DataReader.e_newTimes[lastIndex-1];
-		timeSlider.maxValue = lastTime;
+
+		timeSlider.maxValue = lastTime; //upper bound of the slider
 		//timeSlider2.maxValue = lastTime;
-		timeSlider.value=0f;
+
+		timeSlider.value=0f; //initial value of the slider
 		//timeSlider2.value=0f;
+
+        //lower bound, upper bound and initial speed of the slider
 		speedSlider.minValue = minSpeed;
 		speedSlider.maxValue = maxSpeed;
 		speedSlider.value = minSpeed;
+        
         PopulateList();
         deactivationQueue = new Queue<int>();
         QueueBasket = new Queue<int>();
@@ -94,23 +104,28 @@ public class UIActions : MonoBehaviour
         //unactivatePhase = new Dictionary<int, List<int>>();
     }
 
+    //this method adds the phase labels to the dropdown menu on the VR controllers 
+    public void PopulateList() {
+        dropdown.AddOptions(DataReader.myNames);
+    }
 
-//Updates and check the FPS so timeSlider adapts to it, and plays animation in real time
-	void Update()
-	{		
-		if(isPlaying){
-			if(startTime==0f){
-				startTime= Time.time;
+    //Updates and check the FPS so timeSlider adapts to it, and plays animation in real time
+	void Update() {		
+		if(isPlaying) {
+			if(startTime==0f) { //at the beginning, sets current time as the initial one
+				startTime = Time.time;
 			}
 			fps = 1/Time.deltaTime;
             /* 
 			runningTime += Time.deltaTime;
 			print("runtime" + runningTime); //ran for 1 minute
 			*/
-            myDeltaTime = (1000 / fps) * speed;
+            myDeltaTime = (1000/fps)*speed; //increment for the slider value, which determines its physical translation in space
 
-            timeSlider.value += myDeltaTime;// 1/fps, this makes the animation run in real time if speed is 1. 1000 is in [ms]
+            timeSlider.value += myDeltaTime; //1/fps, this makes the animation run in real time if speed is 1. 1000 is in [ms]
             //timeSlider2.value = timeSlider.value;
+
+            
             speedText.text = speedSlider.value.ToString("Speed: " + speed);
 			timeText.text = timeSlider.value.ToString("0 ms");
             //speedText.text = speedSlider.value.ToString("0.001");
@@ -118,71 +133,72 @@ public class UIActions : MonoBehaviour
         }
 
         // Hide and show 2D graph
-        /*if (Input.GetKeyDown(KeyCode.K)){
+        /*
+        if (Input.GetKeyDown(KeyCode.K))c{
 			timeSlider2.gameObject.SetActive(false);
 		}
-		if(Input.GetKeyDown(KeyCode.L)){
+		if(Input.GetKeyDown(KeyCode.L))c{
 			timeSlider2.gameObject.SetActive(true);
-		}*/
-        /* if (!isPlaying)
-         {
-             CreateNeurons.UnactivateAll();
-         }*/
+		}
+        if (!isPlaying)
+        {
+            CreateNeurons.UnactivateAll();
+        }
+        */
         //timeSlider.OnDrag(bruv());
     }
    
 
-    //Excitatory deactivation
-    public void ExcitatoryDeactivation(float currentTime)
-    {
-
-       /* var selectedValues = DataReader.phase.Where(x => (x.Key < Mathf.RoundToInt(currentTime) -myDeltaTime) && (x.Key > Mathf.RoundToInt(currentTime) - (myDeltaTime*2))).Select(x => x.Key);
-        foreach (var timeStamp in selectedValues)
-        {
-
+    /*
+        this method is supposed to progressively deactivate pyramid cells while playing an animation
+    */
+    public void ExcitatoryDeactivation(float currentTime) {
+        /* 
+        var selectedValues = DataReader.phase.Where(x => (x.Key < Mathf.RoundToInt(currentTime) -myDeltaTime) && (x.Key > Mathf.RoundToInt(currentTime) - (myDeltaTime*2))).Select(x => x.Key);
+        
+        foreach (var timeStamp in selectedValues) {
             //deactivationQueue.Enqueue(timeStamp);
             tempListExc = DataReader.phase[timeStamp];
-            foreach (var index in tempListExc)
-            {
+            
+            foreach (var index in tempListExc) {
                 int n = DataReader.e_src[index];
+                
                 //if (Mathf.RoundToInt(currentTime) - CreateNeurons.listN[n].GetComponent<Excitatory>().PreviousTime > 15 && !CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive)
-                //if (!CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive && timeStamp >CreateNeurons.listN[n].GetComponent<Excitatory>().latestActivationTime)
-                //{
-                CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive = false;
-                CreateNeurons.listN[n].GetComponent<Excitatory>().latestActivationTime = timeStamp;
-
-
-                StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().DeactivateExc(speed * 0.01f));
-                //}
+                
+                //if (!CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive && timeStamp >CreateNeurons.listN[n].GetComponent<Excitatory>().latestActivationTime) {
+                    CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive = false;
+                    CreateNeurons.listN[n].GetComponent<Excitatory>().latestActivationTime = timeStamp;
+                    StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().DeactivateExc(speed * 0.01f));
+                }
             }
+        }
+        */
 
-        }*/
-
-        if (deactivationQueue.Count > 0)
-        {
-               var timeIndex = deactivationQueue.Peek();
-                if (timeIndex < (Mathf.RoundToInt(currentTime) - 15))
+        if (deactivationQueue.Count > 0) {
+            var timeIndex = deactivationQueue.Peek();
+            
+            if (timeIndex < (Mathf.RoundToInt(currentTime) - 15)) {
+                deactivationQueue.Dequeue();
+                tempListExc = DataReader.phase[timeIndex];
+                foreach (var index in tempListExc)
                 {
-                    deactivationQueue.Dequeue();
-                    tempListExc = DataReader.phase[timeIndex];
-                    foreach (var index in tempListExc)
+                    int n = DataReader.e_src[index];
+                    //if (Mathf.RoundToInt(currentTime) - CreateNeurons.listN[n].GetComponent<Excitatory>().PreviousTime > 15 && !CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive)
+                    if (CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive)
                     {
-                        int n = DataReader.e_src[index];
-                        //if (Mathf.RoundToInt(currentTime) - CreateNeurons.listN[n].GetComponent<Excitatory>().PreviousTime > 15 && !CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive)
-                        if (CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive)
-                        {
-                            StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().DeactivateExc(speed * 0.01f));
-                            CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive = false;
-                        }
+                        StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().DeactivateExc(speed * 0.01f));
+                        CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive = false;
                     }
                 }
+            }
 
         }
     }
 
 
-    //Excitatory activation
-    //Check current time and takes out currently active neurons.
+    /*
+        this method is supposed to check current time and activate the pyramid cells that correspond to it
+    */
     public void ExcitatoryActivation(float currentTime)
     {
 
@@ -190,213 +206,187 @@ public class UIActions : MonoBehaviour
         if (DataReader.phase.ContainsKey(Mathf.RoundToInt(currentTime) + 1) && prevTime != Mathf.RoundToInt(currentTime) + 1)
         {
             deactivationQueue.Enqueue((Mathf.RoundToInt(currentTime) + 1));
-
             tempListExc = DataReader.phase[Mathf.RoundToInt(currentTime) + 1];
 
-            foreach (var index in tempListExc)
-            {
+            foreach (var index in tempListExc) {
                 int n = DataReader.e_src[index];
-                if ((Mathf.RoundToInt(currentTime) + 1) - CreateNeurons.listN[n].GetComponent<Excitatory>().PreviousTime > 15 && !CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive)
-                {
+                if ((Mathf.RoundToInt(currentTime) + 1) - CreateNeurons.listN[n].GetComponent<Excitatory>().PreviousTime > 15 && !CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive) {
                     CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive = true;
                     CreateNeurons.listN[n].GetComponent<Excitatory>().latestActivationTime = (Mathf.RoundToInt(currentTime) + 1);
                     StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().ActivateExc(speed * 0.01f));
                 }
             }
-            /*var selectedValues = DataReader.phase.Where(x => (x.Key < Mathf.RoundToInt(currentTime)+1) && (x.Key > Mathf.RoundToInt(currentTime) - myDeltaTime)).Select(x => x.Key);
+            
+            /*
+            var selectedValues = DataReader.phase.Where(x => (x.Key < Mathf.RoundToInt(currentTime)+1) && (x.Key > Mathf.RoundToInt(currentTime) - myDeltaTime)).Select(x => x.Key);
             foreach(var timeStamp in selectedValues) { 
+                //deactivationQueue.Enqueue(timeStamp);
+                tempListExc = DataReader.phase[timeStamp];
+                foreach (var index in tempListExc) {
+                    int n = DataReader.e_src[index];
+                    //if (Mathf.RoundToInt(currentTime) - CreateNeurons.listN[n].GetComponent<Excitatory>().PreviousTime > 15 && !CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive)
+                    //if (!CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive && timeStamp >CreateNeurons.listN[n].GetComponent<Excitatory>().latestActivationTime)
+                    //{
+                        CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive = true;
+                        CreateNeurons.listN[n].GetComponent<Excitatory>().latestActivationTime = timeStamp;
+                        StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().ActivateExc(speed*0.01f));
+                    //}
+                }
 
-                     //deactivationQueue.Enqueue(timeStamp);
-                     tempListExc = DataReader.phase[timeStamp];
-                     foreach (var index in tempListExc)
-                     {
-                         int n = DataReader.e_src[index];
-                         //if (Mathf.RoundToInt(currentTime) - CreateNeurons.listN[n].GetComponent<Excitatory>().PreviousTime > 15 && !CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive)
-                         //if (!CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive && timeStamp >CreateNeurons.listN[n].GetComponent<Excitatory>().latestActivationTime)
-                         //{
-                             CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive = true;
-                             CreateNeurons.listN[n].GetComponent<Excitatory>().latestActivationTime = timeStamp;
-
-
-                             StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().ActivateExc(speed*0.01f));
-                         //}
-                     }
-
-            }*/
+            }
+            */
         }
     }
 
-    public void ActivationBasket(float currentTime)
-    {
- //Inhibitory
-        if (DataReader.basketphase.ContainsKey(Mathf.RoundToInt(currentTime)+1) && prevTime != Mathf.RoundToInt(currentTime)+1)
-        {
-            QueueBasket.Enqueue((Mathf.RoundToInt(currentTime) + 1));
+    /*
+        this method is supposed to check current time and activate the basket cells that correspond to it
+    */
+    public void ActivationBasket(float currentTime) {
+        //Inhibitory
+        if (DataReader.basketphase.ContainsKey(Mathf.RoundToInt(currentTime)+1) && prevTime != Mathf.RoundToInt(currentTime)+1) {
+            QueueBasket.Enqueue((Mathf.RoundToInt(currentTime) + 1)); //enqueues successive basket cell phase value
+            tempListInh = DataReader.basketphase[Mathf.RoundToInt(currentTime)+1]; //values corresponding to a specific phase
 
-            tempListInh = DataReader.basketphase[Mathf.RoundToInt(currentTime)+1];
-
-            foreach (var index in tempListInh)
-            {
-            int n = DataReader.i_src[index];
-         //if (Mathf.RoundToInt(currentTime) - CreateNeurons.listN[n].GetComponent<Inhibitory>().PreviousTime > 15 && !CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive)
-            if (!CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive && Mathf.RoundToInt(currentTime) -15> CreateNeurons.listN[n].GetComponent<Inhibitory>().latestActivationTime)
-            {
-                CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive = true;
-                 CreateNeurons.listN[n].GetComponent<Inhibitory>().latestActivationTime = Mathf.RoundToInt(currentTime);
-                StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().ActivateInh(speed * 0.01f));
-                //CreateNeurons.listN[n].GetComponent<Inhibitory>().PreviousTime = currentTime;
-             }
-         }
-     }
-     prevTime = Mathf.RoundToInt(currentTime);
-
+            //for every value, selects the related basket cell and, if the cell is inactive and its latest activation time is lesser than the current one - 15, updates those values and plays activation animation
+            foreach (var index in tempListInh) {
+                int n = DataReader.i_src[index];
+                //if (Mathf.RoundToInt(currentTime) - CreateNeurons.listN[n].GetComponent<Inhibitory>().PreviousTime > 15 && !CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive)
+                if (!CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive && Mathf.RoundToInt(currentTime)-15> CreateNeurons.listN[n].GetComponent<Inhibitory>().latestActivationTime) {
+                    CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive = true;
+                    CreateNeurons.listN[n].GetComponent<Inhibitory>().latestActivationTime = Mathf.RoundToInt(currentTime);
+                    StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().ActivateInh(speed * 0.01f));
+                    //CreateNeurons.listN[n].GetComponent<Inhibitory>().PreviousTime = currentTime;
+                }
+            }
+        }
+        prevTime = Mathf.RoundToInt(currentTime); //updated the current time value
     }
 
-public void DeactivationBasket(float currentTime)
-{
- /* var selectedValues = DataReader.basketDeactivation.Where(x => (x.Key < Mathf.RoundToInt(currentTime)) && (x.Key > Mathf.RoundToInt(currentTime-50))).Select(x => x.Value);
+    /*
+        this method is supposed to progressively deactivate neurons while playing an animation
+    */
+    public void DeactivationBasket(float currentTime) {
+        /* 
+        var selectedValues = DataReader.basketDeactivation.Where(x => (x.Key < Mathf.RoundToInt(currentTime)) && (x.Key > Mathf.RoundToInt(currentTime-50))).Select(x => x.Value);
 
-  foreach (var list in selectedValues)
-  {
-      foreach (var index in list)
-      {
-          int n = DataReader.i_src[index];
-          if (CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive)
-          {
-             StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().DeactivateInh(speed * 0.01f));
-              CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive = false;
-
-          }
-
-      }
-  }*/
-        if (QueueBasket.Count != 0)
-        {
+        foreach (var list in selectedValues) {
+            foreach (var index in list) {
+                int n = DataReader.i_src[index];
+                if (CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive) {
+                    StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().DeactivateInh(speed * 0.01f));
+                    CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive = false;
+                }
+            }
+        }
+        */
+        
+        if (QueueBasket.Count != 0) {
             //foreach(var timeIndex in deactivationQueue) { 
             var timeIndex = QueueBasket.Peek();
-            if (timeIndex < (Mathf.RoundToInt(currentTime) - 15))
-            {
+
+            if (timeIndex < (Mathf.RoundToInt(currentTime) - 15)) {
                 QueueBasket.Dequeue();
                 tempListInh = DataReader.basketphase[timeIndex];
-                foreach (var index in tempListInh)
-                {
+                foreach (var index in tempListInh) {
                     int n = DataReader.i_src[index];
                     //if (Mathf.RoundToInt(currentTime) - CreateNeurons.listN[n].GetComponent<Excitatory>().PreviousTime > 15 && !CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive)
-                    if (CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive)
-                    {
+                    if (CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive) {
                         StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().DeactivateInh(speed * 0.01f));
                         CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive = false;
                     }
                 }
             }
         }
-
-
     }
 
-    public void PopulateList()
-    {
-        dropdown.AddOptions(DataReader.myNames);
-    }
-    public void Dropdown_ChangeIndex(int index)
-    {
+
+    /*
+        this method pauses the activation animation and updates the slider's value to the current timestamp
+    */
+    public void Dropdown_ChangeIndex(int index) {
         PlayStop();
         float phaseStart = DataReader.myStart[index];
         timeSlider.value = phaseStart;
     }
-    //phase labels
-    public void PhaseLabel(float currentTime)
-    {
-        nextPhaseIndex = DataReader.myStart
-        .FindIndex(b => (b >= currentTime));
+
+    /*
+        this method identifies the current and the next phase indexes, changes the label accordingly and checks the animation upper bound
+    */
+    public void PhaseLabel(float currentTime) {
+        nextPhaseIndex = DataReader.myStart.FindIndex(b => (b >= currentTime)); //finds index of the very next phase
         //print("next time index" + nextPhaseIndex);
-        if (currentTime < DataReader.myStart[DataReader.myStart.Count() - 1])
-        {
-            currentPhaseIndex = DataReader.myStart
-            .FindIndex(b => (b < DataReader.myStart[nextPhaseIndex] && b >= DataReader.myStart[nextPhaseIndex - 1]));
+
+        //if the current time is lesser than the last phase timestamp, the current phase index is set to the one preceding the next one
+        if (currentTime < DataReader.myStart[DataReader.myStart.Count() - 1]) {
+            currentPhaseIndex = DataReader.myStart.FindIndex(b => (b < DataReader.myStart[nextPhaseIndex] && b >= DataReader.myStart[nextPhaseIndex - 1]));
             //print("current time index " + currentPhaseIndex);
-        }
-        else
-        {
+        } else {
             currentPhaseIndex = (DataReader.myStart.Count() - 1);
         }
+        
         phase.text = "Phase: " + DataReader.myNames[currentPhaseIndex];
         phaseVR.text = phase.text;
-
-
+        
         //If the slider value reaches the max value, then the animation will stop
-        if (currentTime >= timeSlider.maxValue && isPlaying)
-        {
+        if (currentTime >= timeSlider.maxValue && isPlaying) {
             PlayStop();
         }
-        
     }
 
-    public void bruv()
-    {
-        Invoke("Callmemaybe", 0.1f);
+    /*
+        these two methods are supposed to be resetting all the activation queues and stop the animation
+    */
+    public void bruv() {
+        Invoke("Callmemaybe", 0.1f); //waits 100ms before invoking Callmemaybe()
     }
-
-    public void Callmemaybe()
-    {
+    public void Callmemaybe() {
         deactivationQueue.Clear();
         QueueBasket.Clear();
         PlayStop();
         CreateNeurons.UnactivateAll();
     }
 
+    public void PlayStop() {
+		isPlaying=false;
+		myText.text = "Status: Paused";
+        myTextVR.text = "►";
+        print("visualization is paused");
+    }
 
-        //this function check if it is playing or not.
-    public static void PlayNow(){
-		if( isPlaying){
+    /*
+    this 2 methods check whether the activation animation is playing or not
+    */
+    public static void PlayNow() {
+		if(isPlaying) {
 			isPlaying=false;
 			//myText.text = "►";
 			print("visualization is paused");
             //Invoke("bruv", 0.15f);
-        }
-        else
-        {
+        } else {
 			isPlaying = true;
 			//myText.text="■";
 			print("visualization is playing");
 		}
 	}
-
-    public void PlayNow2()
-    {
-        if (isPlaying)
-        {
+    public void PlayNow2() {
+        if (isPlaying) {
             isPlaying = false;
             myText.text = "Status: Paused";
             myTextVR.text = "►";
-           
             print("visualization is paused");
             //Invoke("bruv", 0.15f);
-        }
-        else
-        {
+        } else {
             isPlaying = true;
             myText.text="Status: Running";
             myTextVR.text = "■";
-
             print("visualization is playing");
         }
     }
-
-    public void PlayStop(){
-		isPlaying=false;
-		myText.text = "Status: Paused";
-        myTextVR.text = "►";
-
-        print("visualization is paused");
-    }
-
 
     //change speed of animation
     public void SpeedFunction(float sliderSpeed){
         if (sliderSpeed <= maxSpeed && sliderSpeed >= minSpeed) {
             speed = (Mathf.Pow(10, sliderSpeed) * 0.01f);
-         }
-      
+        } 
 	}
 }
