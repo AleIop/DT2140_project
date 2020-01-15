@@ -34,7 +34,6 @@ public class UIActions : MonoBehaviour
 
     public Queue<int> activeExitatory;
 
-
     int currentNeuron;
 	//public Image myFill;
 	//public Image myHandle;
@@ -59,6 +58,12 @@ public class UIActions : MonoBehaviour
     //private Queue<int> deactivation= new Queue<int>();
     //private Dictionary<int, List<int>> unactivatePhase;
 
+    GameObject graph;
+    GameObject pointer;
+    float endGraph, initPointer, distance;
+
+    public GameObject cameraRig;
+
     //property associated to the variable speed
     public float Speed {
 		get {
@@ -79,8 +84,9 @@ public class UIActions : MonoBehaviour
     // Use this for initialization
     public void Initiate(){
 		timeSlider.minValue = 0f; //lower bound of the slider
-		//timeSlider2.minValue = 0f;
-		//timeSlider.maxValue = 44450.1f;
+                                  //timeSlider2.minValue = 0f;
+                                  //timeSlider.maxValue = 44450.1f;
+
 
         //index and time of the last excitatory spike
 		int lastIndex = DataReader.e_newTimes.Count();
@@ -102,11 +108,19 @@ public class UIActions : MonoBehaviour
         QueueBasket = new Queue<int>();
         activeExitatory = new Queue<int>();
         //unactivatePhase = new Dictionary<int, List<int>>();
+
+        graph = GameObject.Find("Graph");
+        pointer = GameObject.Find("Pointer");
+        initPointer = pointer.transform.position.x;
+        endGraph = graph.GetComponent<RectTransform>().rect.width;
+        distance = endGraph - initPointer;
+
     }
 
     //this method adds the phase labels to the dropdown menu on the VR controllers 
     public void PopulateList() {
         dropdown.AddOptions(DataReader.myNames);
+        speed = speed*0.003f; 
     }
 
     //Updates and check the FPS so timeSlider adapts to it, and plays animation in real time
@@ -126,9 +140,12 @@ public class UIActions : MonoBehaviour
             //timeSlider2.value = timeSlider.value;
 
             
-            speedText.text = speedSlider.value.ToString("Speed: " + speed);
-			timeText.text = timeSlider.value.ToString("0 ms");
+            
+            speedText.text = "Speed: " + speed + " X";
+			//timeText.text = timeSlider.value.ToString("0 ms");
             //speedText.text = speedSlider.value.ToString("0.001");
+
+            if(isPlaying) pointer.transform.Translate(speed*0.00033549f,0,0);
 
         }
 
@@ -186,8 +203,19 @@ public class UIActions : MonoBehaviour
                     //if (Mathf.RoundToInt(currentTime) - CreateNeurons.listN[n].GetComponent<Excitatory>().PreviousTime > 15 && !CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive)
                     if (CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive)
                     {
-                        StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().DeactivateExc(speed * 0.01f));
+                        StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().DeactivateExc(speed));
                         CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive = false;
+                        GameObject tempParent = CreateNeurons.listN[n].GetComponent<Excitatory>().transform.parent.gameObject;
+
+                        /*
+                        GameObject farfar = tempParent.transform.parent.gameObject;
+                        if (Vector3.Distance(new Vector3(0,0,0), cameraRig.transform.position) > 20) {
+                            tempParent.GetComponent<MC>().GetComponent<AudioSource>().enabled = true;
+                            farfar.GetComponent<HC>().IsActive = false;
+                        }
+                        */ 
+
+                        tempParent.GetComponent<MC>().IsActive = false;
                     }
                 }
             }
@@ -212,8 +240,20 @@ public class UIActions : MonoBehaviour
                 int n = DataReader.e_src[index];
                 if ((Mathf.RoundToInt(currentTime) + 1) - CreateNeurons.listN[n].GetComponent<Excitatory>().PreviousTime > 15 && !CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive) {
                     CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive = true;
+                    GameObject tempParent = CreateNeurons.listN[n].GetComponent<Excitatory>().transform.parent.gameObject;
+
+                    /*
+                    GameObject farfar = tempParent.transform.parent.gameObject;
+                    if (Vector3.Distance(new Vector3(0, 0, 0), cameraRig.transform.position) > 20)
+                    {
+                        tempParent.GetComponent<MC>().GetComponent<AudioSource>().enabled = false;
+                        farfar.GetComponent<HC>().IsActive = true;
+                    }
+                    */
+
+                    tempParent.GetComponent<MC>().IsActive = true;
                     CreateNeurons.listN[n].GetComponent<Excitatory>().latestActivationTime = (Mathf.RoundToInt(currentTime) + 1);
-                    StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().ActivateExc(speed * 0.01f));
+                    StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().ActivateExc(speed));
                 }
             }
             
@@ -254,7 +294,7 @@ public class UIActions : MonoBehaviour
                 if (!CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive && Mathf.RoundToInt(currentTime)-15> CreateNeurons.listN[n].GetComponent<Inhibitory>().latestActivationTime) {
                     CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive = true;
                     CreateNeurons.listN[n].GetComponent<Inhibitory>().latestActivationTime = Mathf.RoundToInt(currentTime);
-                    StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().ActivateInh(speed * 0.01f));
+                    StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().ActivateInh(speed));
                     //CreateNeurons.listN[n].GetComponent<Inhibitory>().PreviousTime = currentTime;
                 }
             }
@@ -291,7 +331,7 @@ public class UIActions : MonoBehaviour
                     int n = DataReader.i_src[index];
                     //if (Mathf.RoundToInt(currentTime) - CreateNeurons.listN[n].GetComponent<Excitatory>().PreviousTime > 15 && !CreateNeurons.listN[n].GetComponent<Excitatory>().IsActive)
                     if (CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive) {
-                        StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().DeactivateInh(speed * 0.01f));
+                        StartCoroutine(CreateNeurons.listN[n].GetComponent<PlayAnimation>().DeactivateInh(speed));
                         CreateNeurons.listN[n].GetComponent<Inhibitory>().IsActive = false;
                     }
                 }
@@ -386,7 +426,7 @@ public class UIActions : MonoBehaviour
     //change speed of animation
     public void SpeedFunction(float sliderSpeed){
         if (sliderSpeed <= maxSpeed && sliderSpeed >= minSpeed) {
-            speed = (Mathf.Pow(10, sliderSpeed) * 0.01f);
+            speed = (Mathf.Pow(10, sliderSpeed));
         } 
 	}
 }
